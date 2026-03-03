@@ -147,5 +147,5 @@ GitHub Actions workflows:
 - Commands validated:
   - `cargo test --all-targets`
 - Result: `15 passed; 0 failed` including `tests/regression.rs`.
-- CI/CD status: latest `CI`, `Security`, and `Release` workflows completed successfully.
+- CI/CD status: all tests passed on `main` (`CI` run `22642263964`, `Security` run `22642263960`).
 - Security hygiene: PASS (no hardcoded secrets or private keys detected in tracked files).
