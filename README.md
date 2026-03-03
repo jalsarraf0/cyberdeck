@@ -1,6 +1,7 @@
 # cyberdeck
 
 [![Full Regression CI](https://github.com/jalsarraf0/cyberdeck/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/jalsarraf0/cyberdeck/actions/workflows/ci.yml)
+[![Security](https://github.com/jalsarraf0/cyberdeck/actions/workflows/security.yml/badge.svg?branch=main)](https://github.com/jalsarraf0/cyberdeck/actions/workflows/security.yml)
 
 `cyberdeck` is a cyberpunk-themed TUI for SSH key management and remote command execution.
 The app title inside the interface is `Cyber Terminal - By Snake`.
