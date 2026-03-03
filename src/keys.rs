@@ -99,7 +99,11 @@ pub fn scan_local_keys() -> Result<Vec<LocalKey>> {
     Ok(keys)
 }
 
-pub fn generate_ed25519_key(name: &str, comment: &str, passphrase: Option<&str>) -> Result<LocalKey> {
+pub fn generate_ed25519_key(
+    name: &str,
+    comment: &str,
+    passphrase: Option<&str>,
+) -> Result<LocalKey> {
     let trimmed_name = validate_key_name(name)?;
 
     let ssh_dir = ssh_dir()?;
@@ -133,8 +137,12 @@ pub fn generate_ed25519_key(name: &str, comment: &str, passphrase: Option<&str>)
     }
 
     let pub_path = key_path.with_extension("pub");
-    let raw = fs::read_to_string(&pub_path)
-        .with_context(|| format!("failed reading generated public key: {}", pub_path.display()))?;
+    let raw = fs::read_to_string(&pub_path).with_context(|| {
+        format!(
+            "failed reading generated public key: {}",
+            pub_path.display()
+        )
+    })?;
     let (algorithm, parsed_comment) = parse_pubkey_metadata(raw.trim());
 
     Ok(LocalKey {
@@ -166,10 +174,10 @@ pub fn import_private_key(
 
     let mut read_pub = Command::new("ssh-keygen");
     read_pub.arg("-y").arg("-f").arg(&private_key);
-    if let Some(pass) = passphrase {
-        if !pass.is_empty() {
-            read_pub.arg("-P").arg(pass);
-        }
+    if let Some(pass) = passphrase
+        && !pass.is_empty()
+    {
+        read_pub.arg("-P").arg(pass);
     }
 
     let output = read_pub

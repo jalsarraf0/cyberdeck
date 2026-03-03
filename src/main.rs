@@ -91,11 +91,9 @@ fn main() -> Result<()> {
             name,
             passphrase,
         }) => {
-            let imported = import_private_key(name.as_deref(), &private_key, passphrase.as_deref())?;
-            println!(
-                "Imported {} -> {}",
-                imported.name, imported.public_key_path
-            );
+            let imported =
+                import_private_key(name.as_deref(), &private_key, passphrase.as_deref())?;
+            println!("Imported {} -> {}", imported.name, imported.public_key_path);
             Ok(())
         }
         Some(Commands::Exchange {
@@ -222,25 +220,29 @@ mod tests {
 
     #[test]
     fn build_profile_rejects_empty_host_and_user() {
-        assert!(build_profile(
-            " ".to_string(),
-            22,
-            "user".to_string(),
-            Some("pw".to_string()),
-            None,
-            None
-        )
-        .is_err());
+        assert!(
+            build_profile(
+                " ".to_string(),
+                22,
+                "user".to_string(),
+                Some("pw".to_string()),
+                None,
+                None
+            )
+            .is_err()
+        );
 
-        assert!(build_profile(
-            "127.0.0.1".to_string(),
-            22,
-            " ".to_string(),
-            Some("pw".to_string()),
-            None,
-            None
-        )
-        .is_err());
+        assert!(
+            build_profile(
+                "127.0.0.1".to_string(),
+                22,
+                " ".to_string(),
+                Some("pw".to_string()),
+                None,
+                None
+            )
+            .is_err()
+        );
     }
 
     #[test]

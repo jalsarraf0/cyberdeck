@@ -21,7 +21,9 @@ use ratatui::widgets::{
 
 use crate::keys::{generate_ed25519_key, import_private_key, scan_local_keys};
 use crate::models::{AppConfig, AuthMethod, LocalKey, TargetProfile};
-use crate::ssh_ops::{exchange_public_key, fetch_remote_authorized_keys, run_remote_command, test_connection};
+use crate::ssh_ops::{
+    exchange_public_key, fetch_remote_authorized_keys, run_remote_command, test_connection,
+};
 use crate::storage::{load_config, save_config};
 
 const MAX_LOG_LINES: usize = 200;
@@ -221,14 +223,14 @@ impl TargetForm {
 
         match self.auth_kind {
             AuthFormKind::Password => {
-                rows.push((
-                    "Password".to_string(),
-                    mask_secret(&self.password),
-                    true,
-                ));
+                rows.push(("Password".to_string(), mask_secret(&self.password), true));
             }
             AuthFormKind::KeyFile => {
-                rows.push(("Private Key Path".to_string(), self.private_key.clone(), false));
+                rows.push((
+                    "Private Key Path".to_string(),
+                    self.private_key.clone(),
+                    false,
+                ));
                 rows.push((
                     "Key Passphrase (optional)".to_string(),
                     mask_secret(&self.passphrase),
@@ -337,11 +339,7 @@ impl GenerateKeyForm {
     fn lines(&self) -> Vec<(String, String, bool)> {
         vec![
             ("Key Name".to_string(), self.name.clone(), false),
-            (
-                "Comment".to_string(),
-                self.comment.clone(),
-                false,
-            ),
+            ("Comment".to_string(), self.comment.clone(), false),
             (
                 "Passphrase (optional)".to_string(),
                 mask_secret(&self.passphrase),
@@ -916,7 +914,10 @@ impl App {
             return;
         };
 
-        self.log(format!("Fetching authorized_keys from {}...", target.endpoint()));
+        self.log(format!(
+            "Fetching authorized_keys from {}...",
+            target.endpoint()
+        ));
         match fetch_remote_authorized_keys(&target) {
             Ok(keys) => {
                 self.remote_keys = keys;
@@ -1048,7 +1049,9 @@ fn draw_header(frame: &mut ratatui::Frame<'_>, area: Rect) {
     let title = Paragraph::new(Text::from(vec![
         Line::from(vec![Span::styled(
             "Cyber Terminal - By Snake",
-            Style::default().fg(neon_pink()).add_modifier(Modifier::BOLD),
+            Style::default()
+                .fg(neon_pink())
+                .add_modifier(Modifier::BOLD),
         )]),
         Line::from(vec![Span::styled(
             "Secure SSH Key Exchange and Remote Ops",
@@ -1103,27 +1106,37 @@ fn draw_status_bar(frame: &mut ratatui::Frame<'_>, area: Rect, app: &App) {
         Span::styled("LOCAL ", Style::default().fg(muted_text())),
         Span::styled(
             app.local_keys.len().to_string(),
-            Style::default().fg(neon_cyan()).add_modifier(Modifier::BOLD),
+            Style::default()
+                .fg(neon_cyan())
+                .add_modifier(Modifier::BOLD),
         ),
         Span::styled("  TARGETS ", Style::default().fg(muted_text())),
         Span::styled(
             app.config.targets.len().to_string(),
-            Style::default().fg(neon_cyan()).add_modifier(Modifier::BOLD),
+            Style::default()
+                .fg(neon_cyan())
+                .add_modifier(Modifier::BOLD),
         ),
         Span::styled("  REMOTE KEYS ", Style::default().fg(muted_text())),
         Span::styled(
             app.remote_keys.len().to_string(),
-            Style::default().fg(neon_cyan()).add_modifier(Modifier::BOLD),
+            Style::default()
+                .fg(neon_cyan())
+                .add_modifier(Modifier::BOLD),
         ),
         Span::styled("  ACTIVE ", Style::default().fg(muted_text())),
         Span::styled(
             active_target,
-            Style::default().fg(neon_lime()).add_modifier(Modifier::BOLD),
+            Style::default()
+                .fg(neon_lime())
+                .add_modifier(Modifier::BOLD),
         ),
         Span::styled("  THEME ", Style::default().fg(muted_text())),
         Span::styled(
             app.theme.title(),
-            Style::default().fg(neon_pink()).add_modifier(Modifier::BOLD),
+            Style::default()
+                .fg(neon_pink())
+                .add_modifier(Modifier::BOLD),
         ),
     ]);
 
@@ -1161,7 +1174,9 @@ fn draw_keys_tab(frame: &mut ratatui::Frame<'_>, area: Rect, app: &App) {
                 ListItem::new(Line::from(vec![
                     Span::styled(
                         format!("{} ", k.name),
-                        Style::default().fg(neon_cyan()).add_modifier(Modifier::BOLD),
+                        Style::default()
+                            .fg(neon_cyan())
+                            .add_modifier(Modifier::BOLD),
                     ),
                     Span::styled(k.algorithm.clone(), Style::default().fg(neon_lime())),
                 ]))
@@ -1222,18 +1237,34 @@ fn draw_keys_tab(frame: &mut ratatui::Frame<'_>, area: Rect, app: &App) {
                 ),
             ]),
             Line::raw(""),
-            Line::styled("Actions", Style::default().fg(neon_pink()).add_modifier(Modifier::BOLD)),
+            Line::styled(
+                "Actions",
+                Style::default()
+                    .fg(neon_pink())
+                    .add_modifier(Modifier::BOLD),
+            ),
             Line::styled("g = generate key", Style::default().fg(neon_lime())),
-            Line::styled("i = import existing private key", Style::default().fg(neon_lime())),
+            Line::styled(
+                "i = import existing private key",
+                Style::default().fg(neon_lime()),
+            ),
             Line::styled("r = refresh key list", Style::default().fg(neon_lime())),
         ])
     } else {
         Text::from(vec![
             Line::styled("No key selected.", Style::default().fg(muted_text())),
             Line::raw(""),
-            Line::styled("Actions", Style::default().fg(neon_pink()).add_modifier(Modifier::BOLD)),
+            Line::styled(
+                "Actions",
+                Style::default()
+                    .fg(neon_pink())
+                    .add_modifier(Modifier::BOLD),
+            ),
             Line::styled("g = generate key", Style::default().fg(neon_lime())),
-            Line::styled("i = import existing private key", Style::default().fg(neon_lime())),
+            Line::styled(
+                "i = import existing private key",
+                Style::default().fg(neon_lime()),
+            ),
             Line::styled("r = refresh key list", Style::default().fg(neon_lime())),
         ])
     };
@@ -1267,7 +1298,9 @@ fn draw_targets_tab(frame: &mut ratatui::Frame<'_>, area: Rect, app: &App) {
                 ListItem::new(Line::from(vec![
                     Span::styled(
                         format!("{} ", t.name),
-                        Style::default().fg(neon_cyan()).add_modifier(Modifier::BOLD),
+                        Style::default()
+                            .fg(neon_cyan())
+                            .add_modifier(Modifier::BOLD),
                     ),
                     Span::styled(t.endpoint(), Style::default().fg(neon_lime())),
                 ]))
@@ -1315,7 +1348,12 @@ fn draw_targets_tab(frame: &mut ratatui::Frame<'_>, area: Rect, app: &App) {
                 Span::styled(auth, value_style()),
             ]),
             Line::raw(""),
-            Line::styled("Actions", Style::default().fg(neon_pink()).add_modifier(Modifier::BOLD)),
+            Line::styled(
+                "Actions",
+                Style::default()
+                    .fg(neon_pink())
+                    .add_modifier(Modifier::BOLD),
+            ),
             Line::styled("a = add target", Style::default().fg(neon_lime())),
             Line::styled("d = delete target", Style::default().fg(neon_lime())),
             Line::styled("t = test connection", Style::default().fg(neon_lime())),
@@ -1325,7 +1363,12 @@ fn draw_targets_tab(frame: &mut ratatui::Frame<'_>, area: Rect, app: &App) {
         Text::from(vec![
             Line::styled("No target selected.", Style::default().fg(muted_text())),
             Line::raw(""),
-            Line::styled("Actions", Style::default().fg(neon_pink()).add_modifier(Modifier::BOLD)),
+            Line::styled(
+                "Actions",
+                Style::default()
+                    .fg(neon_pink())
+                    .add_modifier(Modifier::BOLD),
+            ),
             Line::styled("a = add target", Style::default().fg(neon_lime())),
             Line::styled("d = delete target", Style::default().fg(neon_lime())),
             Line::styled("t = test connection", Style::default().fg(neon_lime())),
@@ -1470,7 +1513,12 @@ fn draw_exchange_tab(frame: &mut ratatui::Frame<'_>, area: Rect, app: &App) {
             Span::styled(selected_target, value_style()),
         ]),
         Line::raw(""),
-        Line::styled("Actions", Style::default().fg(neon_pink()).add_modifier(Modifier::BOLD)),
+        Line::styled(
+            "Actions",
+            Style::default()
+                .fg(neon_pink())
+                .add_modifier(Modifier::BOLD),
+        ),
         Line::styled("x = exchange key", Style::default().fg(neon_lime())),
         Line::styled("f = fetch keys", Style::default().fg(neon_lime())),
     ]))
@@ -1529,7 +1577,14 @@ fn draw_console_tab(frame: &mut ratatui::Frame<'_>, area: Rect, app: &App) {
 
     let session_state = app
         .selected_target()
-        .map(|t| format!("target {}@{} | output lines {}", t.user, t.endpoint(), app.console_output.len()))
+        .map(|t| {
+            format!(
+                "target {}@{} | output lines {}",
+                t.user,
+                t.endpoint(),
+                app.console_output.len()
+            )
+        })
         .unwrap_or_else(|| "target none | output lines 0".to_string());
     let session_widget = Paragraph::new(session_state)
         .style(Style::default().fg(neon_lime()).bg(panel_bg()))
@@ -1562,7 +1617,9 @@ fn draw_console_tab(frame: &mut ratatui::Frame<'_>, area: Rect, app: &App) {
     let input_widget = Paragraph::new(app.console_input.as_str())
         .style(input_style)
         .wrap(Wrap { trim: false })
-        .block(cyber_block("Command (e/Enter to edit, Enter or r to run, c clear)"));
+        .block(cyber_block(
+            "Command (e/Enter to edit, Enter or r to run, c clear)",
+        ));
     frame.render_widget(input_widget, right[2]);
 
     let hints = Paragraph::new(if app.console_editing {
@@ -1587,7 +1644,9 @@ fn draw_log_panel(frame: &mut ratatui::Frame<'_>, area: Rect, app: &App) {
         .rev()
         .map(|line| {
             let style = if line.starts_with("ERROR:") {
-                Style::default().fg(neon_pink()).add_modifier(Modifier::BOLD)
+                Style::default()
+                    .fg(neon_pink())
+                    .add_modifier(Modifier::BOLD)
             } else if line.contains("completed")
                 || line.contains("Link OK")
                 || line.contains("Generated")
@@ -1637,7 +1696,10 @@ fn draw_footer(frame: &mut ratatui::Frame<'_>, area: Rect, tab: Tab, console_edi
 fn draw_target_modal(frame: &mut ratatui::Frame<'_>, form: &TargetForm) {
     let area = centered_rect(76, 70, frame.area());
     frame.render_widget(Clear, area);
-    frame.render_widget(cyber_block("Add Target").style(Style::default().bg(panel_bg())), area);
+    frame.render_widget(
+        cyber_block("Add Target").style(Style::default().bg(panel_bg())),
+        area,
+    );
 
     let inner = Layout::default()
         .direction(Direction::Vertical)
@@ -1652,12 +1714,16 @@ fn draw_target_modal(frame: &mut ratatui::Frame<'_>, form: &TargetForm) {
         .map(|(idx, (label, value, _secret))| {
             let highlight = idx == form.field;
             let label_style = if highlight {
-                Style::default().fg(neon_pink()).add_modifier(Modifier::BOLD)
+                Style::default()
+                    .fg(neon_pink())
+                    .add_modifier(Modifier::BOLD)
             } else {
                 Style::default().fg(neon_cyan())
             };
             let value_style = if highlight {
-                Style::default().fg(neon_lime()).add_modifier(Modifier::BOLD)
+                Style::default()
+                    .fg(neon_lime())
+                    .add_modifier(Modifier::BOLD)
             } else {
                 Style::default().fg(muted_text())
             };
@@ -1700,12 +1766,16 @@ fn draw_generate_modal(frame: &mut ratatui::Frame<'_>, form: &GenerateKeyForm) {
         .map(|(idx, (label, value, _secret))| {
             let highlight = idx == form.field;
             let label_style = if highlight {
-                Style::default().fg(neon_pink()).add_modifier(Modifier::BOLD)
+                Style::default()
+                    .fg(neon_pink())
+                    .add_modifier(Modifier::BOLD)
             } else {
                 Style::default().fg(neon_cyan())
             };
             let value_style = if highlight {
-                Style::default().fg(neon_lime()).add_modifier(Modifier::BOLD)
+                Style::default()
+                    .fg(neon_lime())
+                    .add_modifier(Modifier::BOLD)
             } else {
                 Style::default().fg(muted_text())
             };
@@ -1746,12 +1816,16 @@ fn draw_import_modal(frame: &mut ratatui::Frame<'_>, form: &ImportKeyForm) {
         .map(|(idx, (label, value, _secret))| {
             let highlight = idx == form.field;
             let label_style = if highlight {
-                Style::default().fg(neon_pink()).add_modifier(Modifier::BOLD)
+                Style::default()
+                    .fg(neon_pink())
+                    .add_modifier(Modifier::BOLD)
             } else {
                 Style::default().fg(neon_cyan())
             };
             let value_style = if highlight {
-                Style::default().fg(neon_lime()).add_modifier(Modifier::BOLD)
+                Style::default()
+                    .fg(neon_lime())
+                    .add_modifier(Modifier::BOLD)
             } else {
                 Style::default().fg(muted_text())
             };
@@ -1775,7 +1849,9 @@ fn cyber_block(title: &str) -> Block<'_> {
     Block::default()
         .title(Span::styled(
             format!(" {title} "),
-            Style::default().fg(neon_pink()).add_modifier(Modifier::BOLD),
+            Style::default()
+                .fg(neon_pink())
+                .add_modifier(Modifier::BOLD),
         ))
         .borders(Borders::ALL)
         .border_style(Style::default().fg(neon_cyan()))
@@ -1969,7 +2045,9 @@ fn input_active_bg() -> Color {
 }
 
 fn label_style() -> Style {
-    Style::default().fg(neon_pink()).add_modifier(Modifier::BOLD)
+    Style::default()
+        .fg(neon_pink())
+        .add_modifier(Modifier::BOLD)
 }
 
 fn value_style() -> Style {

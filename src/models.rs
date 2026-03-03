@@ -3,7 +3,9 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum AuthMethod {
-    Password { password: String },
+    Password {
+        password: String,
+    },
     KeyFile {
         private_key: String,
         passphrase: Option<String>,

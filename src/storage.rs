@@ -9,7 +9,10 @@ use crate::models::AppConfig;
 const CONFIG_DIR_OVERRIDE_ENV: &str = "KEYEX_CONFIG_DIR";
 
 pub fn config_dir() -> Result<PathBuf> {
-    resolve_config_dir(dirs::config_dir(), std::env::var_os(CONFIG_DIR_OVERRIDE_ENV))
+    resolve_config_dir(
+        dirs::config_dir(),
+        std::env::var_os(CONFIG_DIR_OVERRIDE_ENV),
+    )
 }
 
 pub fn config_path() -> Result<PathBuf> {
@@ -102,16 +105,24 @@ fn save_config_to_path(cfg: &AppConfig, path: &Path) -> Result<()> {
 fn set_dir_permissions(dir: &Path) -> Result<()> {
     use std::os::unix::fs::PermissionsExt;
 
-    fs::set_permissions(dir, fs::Permissions::from_mode(0o700))
-        .with_context(|| format!("failed setting secure permissions on dir: {}", dir.display()))
+    fs::set_permissions(dir, fs::Permissions::from_mode(0o700)).with_context(|| {
+        format!(
+            "failed setting secure permissions on dir: {}",
+            dir.display()
+        )
+    })
 }
 
 #[cfg(unix)]
 fn set_file_permissions(path: &Path) -> Result<()> {
     use std::os::unix::fs::PermissionsExt;
 
-    fs::set_permissions(path, fs::Permissions::from_mode(0o600))
-        .with_context(|| format!("failed setting secure permissions on file: {}", path.display()))
+    fs::set_permissions(path, fs::Permissions::from_mode(0o600)).with_context(|| {
+        format!(
+            "failed setting secure permissions on file: {}",
+            path.display()
+        )
+    })
 }
 
 #[cfg(test)]
@@ -127,7 +138,8 @@ mod tests {
     #[test]
     fn resolve_config_dir_uses_override_when_present() {
         let override_dir = OsString::from("/tmp/keyex-test-override");
-        let resolved = resolve_config_dir(None, Some(override_dir.clone())).expect("resolve override");
+        let resolved =
+            resolve_config_dir(None, Some(override_dir.clone())).expect("resolve override");
         assert_eq!(resolved, std::path::PathBuf::from(override_dir));
     }
 

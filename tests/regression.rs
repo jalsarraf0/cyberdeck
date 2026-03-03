@@ -3,7 +3,9 @@ use std::path::Path;
 use std::process::Command;
 
 use keyex::models::{AuthMethod, TargetProfile};
-use keyex::ssh_ops::{exchange_public_key, fetch_remote_authorized_keys, run_remote_command, test_connection};
+use keyex::ssh_ops::{
+    exchange_public_key, fetch_remote_authorized_keys, run_remote_command, test_connection,
+};
 use tempfile::TempDir;
 
 #[test]
@@ -25,7 +27,9 @@ fn regression_ssh_exchange_and_command_flow() {
         return;
     };
 
-    let port = port_raw.parse::<u16>().expect("KEYEX_TEST_PORT must be u16");
+    let port = port_raw
+        .parse::<u16>()
+        .expect("KEYEX_TEST_PORT must be u16");
 
     let profile = TargetProfile {
         name: "regression-target".to_string(),
