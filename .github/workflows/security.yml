@@ -10,7 +10,6 @@ on:
 
 permissions:
   contents: read
-  security-events: write
 
 jobs:
   dependency-audit:
@@ -24,17 +23,14 @@ jobs:
       - name: Cargo audit
         run: cargo audit
 
-  codeql:
-    name: CodeQL
+  static-analysis:
+    name: Static Analysis
     runs-on: ubuntu-latest
-    permissions:
-      actions: read
-      contents: read
-      security-events: write
     steps:
       - uses: actions/checkout@v4
-      - uses: github/codeql-action/init@v3
+      - uses: dtolnay/rust-toolchain@stable
         with:
-          languages: rust
-      - uses: github/codeql-action/autobuild@v3
-      - uses: github/codeql-action/analyze@v3
+          components: clippy
+      - uses: Swatinem/rust-cache@v2
+      - name: Clippy (deny warnings)
+        run: cargo clippy --all-targets -- -D warnings
