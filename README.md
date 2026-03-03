@@ -79,6 +79,19 @@ Optional: run the built binary directly.
 ./target/debug/cyberdeck
 ```
 
+Install `cyberdeck` as a local command from this exact repo revision (1:1 copy):
+
+```bash
+./scripts/install-local.sh
+cyberdeck
+```
+
+Install from crates.io (published package):
+
+```bash
+cargo install cyberdeck
+```
+
 Quick non-TUI checks:
 
 ```bash
@@ -98,4 +111,20 @@ Runs full build + integration + CLI regression against an isolated Docker SSH se
 
 ```bash
 ./scripts/regression.sh
+```
+
+## Release flow
+
+```bash
+# 1) full regression
+./scripts/regression.sh
+
+# 2) verify crate package
+cargo publish --dry-run
+
+# 3) publish to crates.io
+cargo publish
+
+# 4) install local 1:1 binary used by command "cyberdeck"
+./scripts/install-local.sh
 ```
