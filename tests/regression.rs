@@ -2,34 +2,34 @@ use std::env;
 use std::path::Path;
 use std::process::Command;
 
-use keyex::models::{AuthMethod, TargetProfile};
-use keyex::ssh_ops::{
+use cyberdeck::models::{AuthMethod, TargetProfile};
+use cyberdeck::ssh_ops::{
     exchange_public_key, fetch_remote_authorized_keys, run_remote_command, test_connection,
 };
 use tempfile::TempDir;
 
 #[test]
 fn regression_ssh_exchange_and_command_flow() {
-    let Some(host) = env::var("KEYEX_TEST_HOST").ok() else {
-        eprintln!("SKIP: KEYEX_TEST_HOST is not set");
+    let Some(host) = env::var("CYBERDECK_TEST_HOST").ok() else {
+        eprintln!("SKIP: CYBERDECK_TEST_HOST is not set");
         return;
     };
-    let Some(port_raw) = env::var("KEYEX_TEST_PORT").ok() else {
-        eprintln!("SKIP: KEYEX_TEST_PORT is not set");
+    let Some(port_raw) = env::var("CYBERDECK_TEST_PORT").ok() else {
+        eprintln!("SKIP: CYBERDECK_TEST_PORT is not set");
         return;
     };
-    let Some(user) = env::var("KEYEX_TEST_USER").ok() else {
-        eprintln!("SKIP: KEYEX_TEST_USER is not set");
+    let Some(user) = env::var("CYBERDECK_TEST_USER").ok() else {
+        eprintln!("SKIP: CYBERDECK_TEST_USER is not set");
         return;
     };
-    let Some(private_key) = env::var("KEYEX_TEST_KEY").ok() else {
-        eprintln!("SKIP: KEYEX_TEST_KEY is not set");
+    let Some(private_key) = env::var("CYBERDECK_TEST_KEY").ok() else {
+        eprintln!("SKIP: CYBERDECK_TEST_KEY is not set");
         return;
     };
 
     let port = port_raw
         .parse::<u16>()
-        .expect("KEYEX_TEST_PORT must be u16");
+        .expect("CYBERDECK_TEST_PORT must be u16");
 
     let profile = TargetProfile {
         name: "regression-target".to_string(),
@@ -44,11 +44,11 @@ fn regression_ssh_exchange_and_command_flow() {
 
     test_connection(&profile).expect("connection test failed");
 
-    let result = run_remote_command(&profile, "echo keyex_regression_ok")
+    let result = run_remote_command(&profile, "echo cyberdeck_regression_ok")
         .expect("running remote command failed");
     assert_eq!(result.exit_status, 0, "unexpected exit status");
     assert!(
-        result.stdout.contains("keyex_regression_ok"),
+        result.stdout.contains("cyberdeck_regression_ok"),
         "stdout did not contain expected marker: {}",
         result.stdout
     );
@@ -63,7 +63,7 @@ fn regression_ssh_exchange_and_command_flow() {
             "-N",
             "",
             "-C",
-            "keyex-regression@local",
+            "cyberdeck-regression@local",
             "-f",
             key_base.to_str().unwrap(),
         ])

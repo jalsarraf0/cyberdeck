@@ -193,6 +193,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "cyberdeck"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "base64",
+ "clap",
+ "crossterm",
+ "dirs",
+ "ratatui",
+ "serde",
+ "serde_json",
+ "ssh2",
+ "tempfile",
+]
+
+[[package]]
 name = "darling"
 version = "0.23.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -400,22 +416,6 @@ name = "itoa"
 version = "1.0.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "92ecc6618181def0457392ccd0ee51198e065e016d1d527a7ac1b6dc7c1f09d2"
-
-[[package]]
-name = "keyex"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "base64",
- "clap",
- "crossterm",
- "dirs",
- "ratatui",
- "serde",
- "serde_json",
- "ssh2",
- "tempfile",
-]
 
 [[package]]
 name = "leb128fmt"

@@ -6,7 +6,7 @@ use anyhow::{Context, Result};
 
 use crate::models::AppConfig;
 
-const CONFIG_DIR_OVERRIDE_ENV: &str = "KEYEX_CONFIG_DIR";
+const CONFIG_DIR_OVERRIDE_ENV: &str = "CYBERDECK_CONFIG_DIR";
 
 pub fn config_dir() -> Result<PathBuf> {
     resolve_config_dir(
@@ -46,7 +46,7 @@ fn resolve_config_dir(
     }
 
     let mut path = default_config_dir.context("could not locate config directory")?;
-    path.push("keyex");
+    path.push("cyberdeck");
     Ok(path)
 }
 
@@ -137,7 +137,7 @@ mod tests {
 
     #[test]
     fn resolve_config_dir_uses_override_when_present() {
-        let override_dir = OsString::from("/tmp/keyex-test-override");
+        let override_dir = OsString::from("/tmp/cyberdeck-test-override");
         let resolved =
             resolve_config_dir(None, Some(override_dir.clone())).expect("resolve override");
         assert_eq!(resolved, std::path::PathBuf::from(override_dir));

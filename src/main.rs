@@ -1,12 +1,12 @@
 use anyhow::{Result, anyhow};
 use clap::{Parser, Subcommand};
-use keyex::keys::{expand_home_path, import_private_key, scan_local_keys};
-use keyex::models::{AuthMethod, TargetProfile};
-use keyex::ssh_ops::{exchange_public_key, fetch_remote_authorized_keys, run_remote_command};
-use keyex::tui::run_tui;
+use cyberdeck::keys::{expand_home_path, import_private_key, scan_local_keys};
+use cyberdeck::models::{AuthMethod, TargetProfile};
+use cyberdeck::ssh_ops::{exchange_public_key, fetch_remote_authorized_keys, run_remote_command};
+use cyberdeck::tui::run_tui;
 
 #[derive(Parser, Debug)]
-#[command(name = "keyex")]
+#[command(name = "cyberdeck")]
 #[command(version)]
 #[command(about = "Cyberpunk SSH key exchange and command console")]
 struct Cli {
@@ -216,7 +216,7 @@ fn build_profile(
 #[cfg(test)]
 mod tests {
     use super::build_profile;
-    use keyex::models::AuthMethod;
+    use cyberdeck::models::AuthMethod;
 
     #[test]
     fn build_profile_rejects_empty_host_and_user() {

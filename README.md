@@ -1,6 +1,6 @@
-# keyex
+# cyberdeck
 
-`keyex` is a cyberpunk-themed TUI for SSH key management and remote command execution.
+`cyberdeck` is a cyberpunk-themed TUI for SSH key management and remote command execution.
 The app title inside the interface is `Cyber Terminal - By Snake`.
 
 ## What it does
@@ -43,19 +43,19 @@ The TUI is default. Extra commands are included for automation and regression:
 
 ```bash
 # list local keys
-keyex list-keys
+cyberdeck list-keys
 
 # import an existing private key (optional passphrase)
-keyex import-key --private-key ~/.ssh/id_ed25519 --passphrase "your-passphrase"
+cyberdeck import-key --private-key ~/.ssh/id_ed25519 --passphrase "your-passphrase"
 
 # run command on remote host
-keyex run --host 10.0.0.12 --port 22 --user dev --key-file ~/.ssh/id_ed25519 --cmd "uname -a"
+cyberdeck run --host 10.0.0.12 --port 22 --user dev --key-file ~/.ssh/id_ed25519 --cmd "uname -a"
 
 # exchange local public key to remote authorized_keys
-keyex exchange --host 10.0.0.12 --port 22 --user dev --key-file ~/.ssh/id_ed25519 --public-key ~/.ssh/id_ed25519.pub
+cyberdeck exchange --host 10.0.0.12 --port 22 --user dev --key-file ~/.ssh/id_ed25519 --public-key ~/.ssh/id_ed25519.pub
 
 # fetch remote authorized keys
-keyex fetch --host 10.0.0.12 --port 22 --user dev --key-file ~/.ssh/id_ed25519
+cyberdeck fetch --host 10.0.0.12 --port 22 --user dev --key-file ~/.ssh/id_ed25519
 ```
 
 For auth, use exactly one of:
@@ -76,7 +76,7 @@ cargo run
 Optional: run the built binary directly.
 
 ```bash
-./target/debug/keyex
+./target/debug/cyberdeck
 ```
 
 Quick non-TUI checks:
@@ -88,7 +88,7 @@ cargo run -- run --host 127.0.0.1 --port 22 --user your_user --key-file ~/.ssh/i
 
 ## Security notes
 
-- Target profiles are saved in `~/.config/keyex/config.json`.
+- Target profiles are saved in `~/.config/cyberdeck/config.json`.
 - If you choose password auth in the current implementation, passwords are stored in config for convenience.
 - Regression SSH server is localhost-bound and disposable.
 

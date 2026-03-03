@@ -440,7 +440,7 @@ impl App {
             console_editing: false,
             theme,
         };
-        app.log("SYSTEM BOOT: KeyEx cyber deck ready.");
+        app.log("SYSTEM BOOT: Cyberdeck cyber deck ready.");
         app.log(format!("Theme loaded: {}", app.theme.title()));
         app.log("Tip: press 1-4 to switch tabs, F2 to change theme, q to quit.");
         Ok(app)

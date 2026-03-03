@@ -2,13 +2,13 @@
 set -euo pipefail
 
 IMAGE="lscr.io/linuxserver/openssh-server:latest"
-CONTAINER_NAME="keyex-regression-$(date +%s)-$RANDOM"
+CONTAINER_NAME="cyberdeck-regression-$(date +%s)-$RANDOM"
 WORKDIR="$(mktemp -d)"
 CLIENT_KEY_BASE="$WORKDIR/client_regression_key"
 EXCHANGE_KEY_BASE="$WORKDIR/exchange_key"
 PASS_KEY_BASE="$WORKDIR/passphrase_key"
-PASS_KEY_PASSPHRASE="keyex-passphrase-regression"
-KEY_IMPORT_NAME="keyex_regression_imported_$RANDOM"
+PASS_KEY_PASSPHRASE="cyberdeck-passphrase-regression"
+KEY_IMPORT_NAME="cyberdeck_regression_imported_$RANDOM"
 IMPORTED_PUB="$HOME/.ssh/${KEY_IMPORT_NAME}.pub"
 
 cleanup() {
@@ -18,7 +18,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
-ssh-keygen -q -t ed25519 -N "" -C "keyex-regression-client" -f "$CLIENT_KEY_BASE" >/dev/null
+ssh-keygen -q -t ed25519 -N "" -C "cyberdeck-regression-client" -f "$CLIENT_KEY_BASE" >/dev/null
 CLIENT_PUBLIC_KEY="$(cat "$CLIENT_KEY_BASE.pub")"
 
 # Isolated SSH server: localhost-bound and disposable.
@@ -59,10 +59,10 @@ echo "Building project..."
 cargo build
 
 echo "Running Rust integration regression test..."
-KEYEX_TEST_HOST=127.0.0.1 \
-KEYEX_TEST_PORT="$PORT" \
-KEYEX_TEST_USER=tester \
-KEYEX_TEST_KEY="$CLIENT_KEY_BASE" \
+CYBERDECK_TEST_HOST=127.0.0.1 \
+CYBERDECK_TEST_PORT="$PORT" \
+CYBERDECK_TEST_USER=tester \
+CYBERDECK_TEST_KEY="$CLIENT_KEY_BASE" \
 cargo test --test regression -- --nocapture
 
 echo "Running CLI regression checks..."
@@ -89,7 +89,7 @@ if [[ "$RUN_OUTPUT" != *"cli_regression_ok"* ]]; then
   exit 1
 fi
 
-ssh-keygen -q -t ed25519 -N "" -C "keyex-regression-exchange" -f "$EXCHANGE_KEY_BASE" >/dev/null
+ssh-keygen -q -t ed25519 -N "" -C "cyberdeck-regression-exchange" -f "$EXCHANGE_KEY_BASE" >/dev/null
 cargo run --quiet -- exchange \
   --host 127.0.0.1 \
   --port "$PORT" \
@@ -109,7 +109,7 @@ if [[ "$FETCH_OUTPUT" != *"$EXCHANGE_LINE"* ]]; then
   exit 1
 fi
 
-ssh-keygen -q -t ed25519 -N "$PASS_KEY_PASSPHRASE" -C "keyex-regression-passphrase" -f "$PASS_KEY_BASE" >/dev/null
+ssh-keygen -q -t ed25519 -N "$PASS_KEY_PASSPHRASE" -C "cyberdeck-regression-passphrase" -f "$PASS_KEY_BASE" >/dev/null
 cargo run --quiet -- exchange \
   --host 127.0.0.1 \
   --port "$PORT" \
