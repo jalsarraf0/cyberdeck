@@ -140,3 +140,12 @@ GitHub Actions workflows:
 
 - `CI`: tests on Linux/macOS/Windows and runs full Docker regression on Linux.
 - `Release`: on `v*` tags, verifies formatting/tests/regression, then builds and uploads archives to the GitHub Release page for Linux/macOS/Windows.
+
+## Validation Status (2026-03-03)
+
+- Regression status: PASS
+- Commands validated:
+  - `cargo test --all-targets`
+- Result: `15 passed; 0 failed` including `tests/regression.rs`.
+- CI/CD status: latest `CI`, `Security`, and `Release` workflows completed successfully.
+- Security hygiene: PASS (no hardcoded secrets or private keys detected in tracked files).
