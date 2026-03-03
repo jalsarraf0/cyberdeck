@@ -127,4 +127,13 @@ cargo publish
 
 # 4) install local 1:1 binary used by command "cyberdeck"
 ./scripts/install-local.sh
+
+# 5) publish GitHub release artifacts for Linux/macOS/Windows
+git tag v$(awk -F'"' '$1 ~ /^version = / { print $2; exit }' Cargo.toml)
+git push origin --tags
 ```
+
+GitHub Actions workflows:
+
+- `CI`: tests on Linux/macOS/Windows and runs full Docker regression on Linux.
+- `Release`: on `v*` tags, verifies formatting/tests/regression, then builds and uploads archives to the GitHub Release page for Linux/macOS/Windows.
