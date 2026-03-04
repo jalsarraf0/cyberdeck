@@ -20,7 +20,8 @@ The app title inside the interface is `Cyber Terminal - By Snake`.
 ## Screenshot of Cyberpunk Theme
 
 
-<img width="2232" height="1293" alt="image" src="https://github.com/user-attachments/assets/1cca96c6-5c9e-45d4-b10f-8b9b457567d0" />
+<img width="2227" height="1288" alt="image" src="https://github.com/user-attachments/assets/a37a1ea7-2bf5-498e-8fb0-05b448901f19" />
+
 
 ## TUI controls
 
