@@ -1,3 +1,5 @@
+#![forbid(unsafe_code)]
+
 pub mod keys;
 pub mod models;
 pub mod ssh_ops;
