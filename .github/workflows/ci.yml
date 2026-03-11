@@ -11,7 +11,7 @@ permissions:
 jobs:
   test-cross-platform:
     name: Test (${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
+    runs-on: [self-hosted, Linux, X64, docker]
     strategy:
       fail-fast: false
       matrix:
@@ -25,17 +25,14 @@ jobs:
 
   linux-regression:
     name: Linux Full Regression
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Linux, X64, docker]
     timeout-minutes: 30
+    env:
+      DOCKER_RUNNER_CACHE: /tmp/docker-runner
+      DOCKER_RUNNER_PRUNE: "true"
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          components: rustfmt
-      - uses: Swatinem/rust-cache@v2
-      - name: Formatting check
-        run: cargo fmt --all -- --check
-      - name: Unit and integration tests
-        run: cargo test --all-targets
-      - name: Full regression (Docker SSH flow)
-        run: ./scripts/regression.sh
+      - name: Initialize Docker runner cache
+        run: mkdir -p /tmp/docker-runner/{images,cache,artifacts}
+      - name: Full regression (Docker)
+        run: bash .github/scripts/docker-runner.sh rust:1.93-bookworm "cargo fmt --all -- --check && cargo test --all-targets && ./scripts/regression.sh"
