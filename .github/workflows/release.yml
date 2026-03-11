@@ -11,7 +11,7 @@ permissions:
 jobs:
   verify:
     name: Verify Before Release
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Linux, X64, docker]
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
@@ -41,7 +41,7 @@ jobs:
   build:
     name: Build (${{ matrix.os }})
     needs: verify
-    runs-on: ${{ matrix.os }}
+    runs-on: [self-hosted, Linux, X64, docker]
     strategy:
       fail-fast: false
       matrix:
@@ -106,7 +106,7 @@ jobs:
   publish:
     name: Publish GitHub Release
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Linux, X64, docker]
     steps:
       - name: Download build artifacts
         uses: actions/download-artifact@v4
