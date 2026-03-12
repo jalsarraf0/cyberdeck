@@ -41,4 +41,4 @@ jobs:
       - name: Initialize Docker runner cache
         run: mkdir -p /tmp/docker-runner/{images,cache,artifacts}
       - name: Full regression (Docker)
-        run: bash .github/scripts/docker-runner.sh rust:1.93-bookworm "cargo fmt --all -- --check && cargo test --all-targets && ./scripts/regression.sh"
+        run: bash .github/scripts/docker-runner.sh rust:1.93-bookworm "rustup component add rustfmt clippy && cargo fmt --all -- --check && cargo clippy --workspace --all-targets -- -D warnings && cargo test --all-targets && ./scripts/regression.sh"

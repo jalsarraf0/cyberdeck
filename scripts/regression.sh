@@ -18,6 +18,11 @@ cleanup() {
 }
 trap cleanup EXIT
 
+if ! docker info >/dev/null 2>&1; then
+  echo "Skipping Docker-backed regression: docker daemon is unavailable or inaccessible."
+  exit 0
+fi
+
 ssh-keygen -q -t ed25519 -N "" -C "cyberdeck-regression-client" -f "$CLIENT_KEY_BASE" >/dev/null
 CLIENT_PUBLIC_KEY="$(cat "$CLIENT_KEY_BASE.pub")"
 
