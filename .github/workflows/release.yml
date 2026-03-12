@@ -7,6 +7,8 @@ on:
 
 permissions:
   contents: write
+  id-token: write
+  attestations: write
 
 jobs:
   verify:
@@ -88,6 +90,18 @@ jobs:
           Compress-Archive -Path "dist/${{ matrix.bin }}" -DestinationPath $archive -Force
           "archive=$archive" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
           "target=$target" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+
+      - name: Attest build provenance (Linux/macOS)
+        if: runner.os != 'Windows'
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: ${{ steps.package_unix.outputs.archive }}
+
+      - name: Attest build provenance (Windows)
+        if: runner.os == 'Windows'
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: ${{ steps.package_windows.outputs.archive }}
 
       - name: Upload artifact (Linux/macOS)
         if: runner.os != 'Windows'
