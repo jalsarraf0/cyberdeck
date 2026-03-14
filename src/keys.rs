@@ -206,7 +206,7 @@ pub fn import_private_key(
         None => private_key
             .file_name()
             .map(|s| s.to_string_lossy().to_string())
-            .ok_or_else(|| anyhow!("could not derive key name from {}", private_key.display()))?,
+            .ok_or_else(|| anyhow!("could not derive key name from private key filename"))?,
     };
 
     let ssh_dir = ssh_dir()?;
@@ -219,8 +219,7 @@ pub fn import_private_key(
             .with_context(|| format!("failed reading existing key: {}", pub_path.display()))?;
         if existing.trim() != public_key {
             return Err(anyhow!(
-                "key {} already exists with different contents at {}",
-                key_name,
+                "key already exists with different contents at {}",
                 pub_path.display()
             ));
         }
