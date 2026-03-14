@@ -8,8 +8,13 @@ on:
   schedule:
     - cron: "0 6 * * 1"
 
+concurrency:
+  group: security-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
+  security-events: write
 
 jobs:
   dependency-audit:
@@ -23,6 +28,18 @@ jobs:
       - name: Cargo audit
         run: cargo audit
 
+  cargo-deny:
+    name: Cargo Deny
+    runs-on: [self-hosted, Linux, X64, docker]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Install cargo-deny
+        run: cargo install cargo-deny --locked
+      - name: Cargo deny check
+        run: cargo deny check --config deny.toml --hide-inclusion-graph bans licenses sources
+
   static-analysis:
     name: Static Analysis
     runs-on: [self-hosted, Linux, X64, docker]
@@ -34,3 +51,63 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - name: Clippy (deny warnings)
         run: cargo clippy --all-targets -- -D warnings
+
+  gitleaks:
+    name: Gitleaks Secret Scan
+    runs-on: [self-hosted, Linux, X64, docker]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Gitleaks
+        run: |
+          if command -v gitleaks >/dev/null 2>&1; then
+            gitleaks version
+            exit 0
+          fi
+          version="8.24.3"
+          arch="$(uname -m)"
+          case "${arch}" in
+            x86_64)
+              archive="gitleaks_${version}_linux_x64.tar.gz"
+              ;;
+            aarch64|arm64)
+              archive="gitleaks_${version}_linux_arm64.tar.gz"
+              ;;
+            *)
+              echo "Unsupported architecture for gitleaks: ${arch}"
+              exit 1
+              ;;
+          esac
+          url="https://github.com/gitleaks/gitleaks/releases/download/v${version}/${archive}"
+          tmpdir="$(mktemp -d)"
+          if command -v curl >/dev/null 2>&1; then
+            curl -fsSL "${url}" -o "${tmpdir}/${archive}"
+          elif command -v wget >/dev/null 2>&1; then
+            wget -q "${url}" -O "${tmpdir}/${archive}"
+          else
+            echo "Neither curl nor wget is available for downloading gitleaks."
+            exit 1
+          fi
+          tar -xzf "${tmpdir}/${archive}" -C "${tmpdir}"
+          if command -v sudo >/dev/null 2>&1; then
+            sudo install -m 0755 "${tmpdir}/gitleaks" /usr/local/bin/gitleaks
+          elif install -m 0755 "${tmpdir}/gitleaks" /usr/local/bin/gitleaks 2>/dev/null; then
+            true
+          else
+            mkdir -p "${HOME}/.local/bin"
+            install -m 0755 "${tmpdir}/gitleaks" "${HOME}/.local/bin/gitleaks"
+            echo "${HOME}/.local/bin" >> "${GITHUB_PATH}"
+          fi
+
+      - name: Gitleaks detect
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          gitleaks detect --source . --redact --verbose --exit-code 1 --report-format sarif --report-path gitleaks.sarif
+
+      - name: Upload Gitleaks SARIF
+        if: always()
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: gitleaks.sarif
