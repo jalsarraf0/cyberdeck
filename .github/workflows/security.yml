@@ -19,10 +19,8 @@ permissions:
 jobs:
   dependency-audit:
     name: Dependency Audit
-    runs-on: [self-hosted, Linux, X64, docker]
+    runs-on: ubuntu-latest
     steps:
-      - name: Fix ownership
-        run: sudo chown -R $(whoami) ${{ github.workspace }} 2>/dev/null || true
 
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
@@ -33,10 +31,8 @@ jobs:
 
   cargo-deny:
     name: Cargo Deny
-    runs-on: [self-hosted, Linux, X64, docker]
+    runs-on: ubuntu-latest
     steps:
-      - name: Fix ownership
-        run: sudo chown -R $(whoami) ${{ github.workspace }} 2>/dev/null || true
 
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
@@ -48,10 +44,8 @@ jobs:
 
   static-analysis:
     name: Static Analysis
-    runs-on: [self-hosted, Linux, X64, docker]
+    runs-on: ubuntu-latest
     steps:
-      - name: Fix ownership
-        run: sudo chown -R $(whoami) ${{ github.workspace }} 2>/dev/null || true
 
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
@@ -63,10 +57,8 @@ jobs:
 
   gitleaks:
     name: Gitleaks Secret Scan
-    runs-on: [self-hosted, Linux, X64, docker]
+    runs-on: ubuntu-latest
     steps:
-      - name: Fix ownership
-        run: sudo chown -R $(whoami) ${{ github.workspace }} 2>/dev/null || true
 
       - uses: actions/checkout@v4
         with:

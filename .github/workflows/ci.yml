@@ -21,15 +21,12 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            runs-on: [self-hosted, Linux, X64, docker]
+            runs-on: ubuntu-latest
           - os: macos-latest
             runs-on: macos-latest
           - os: windows-latest
             runs-on: windows-latest
     steps:
-      - name: Fix ownership
-        if: runner.os == 'Linux'
-        run: sudo chown -R $(whoami) ${{ github.workspace }} 2>/dev/null || true
 
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
@@ -39,15 +36,12 @@ jobs:
 
   linux-regression:
     name: Linux Full Regression
-    runs-on: [self-hosted, Linux, X64, docker]
+    runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
       DOCKER_RUNNER_CACHE: /tmp/docker-runner
       DOCKER_RUNNER_PRUNE: "true"
     steps:
-      - name: Fix ownership
-        if: runner.os == 'Linux'
-        run: sudo chown -R $(whoami) ${{ github.workspace }} 2>/dev/null || true
 
       - uses: actions/checkout@v4
       - name: Initialize Docker runner cache
