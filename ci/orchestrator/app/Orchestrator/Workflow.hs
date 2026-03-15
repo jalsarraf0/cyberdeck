@@ -162,7 +162,7 @@ releaseYaml = unlines
     , "            cross: true"
     , "          - target: x86_64-apple-darwin"
     , "            bin: cyberdeck"
-    , "            runner: macos-13"
+    , "            runner: macos-latest"
     , "          - target: aarch64-apple-darwin"
     , "            bin: cyberdeck"
     , "            runner: macos-latest"
