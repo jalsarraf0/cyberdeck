@@ -21,11 +21,7 @@ fn connect_session(profile: &TargetProfile) -> Result<Session> {
     let mut session = Session::new().context("failed creating ssh session")?;
     session.set_tcp_stream(tcp);
     session.handshake().with_context(|| {
-        format!(
-            "failed SSH handshake with {}@{}",
-            profile.user,
-            profile.endpoint()
-        )
+        format!("failed SSH handshake with {}", profile.endpoint())
     })?;
 
     match &profile.auth {
@@ -33,25 +29,15 @@ fn connect_session(profile: &TargetProfile) -> Result<Session> {
             session
                 .userauth_password(&profile.user, password)
                 .with_context(|| {
-                    format!(
-                        "password auth failed for {}@{}",
-                        profile.user,
-                        profile.endpoint()
-                    )
+                    format!("password auth failed for {}", profile.endpoint())
                 })?;
         }
         AuthMethod::KeyFile {
             private_key,
             passphrase,
         } => {
-            let expanded_private_key = expand_home_path(private_key).with_context(|| {
-                format!(
-                    "invalid private key path for {}@{}: {}",
-                    profile.user,
-                    profile.endpoint(),
-                    private_key
-                )
-            })?;
+            let expanded_private_key = expand_home_path(private_key)
+                .context("invalid private key path")?;
             session
                 .userauth_pubkey_file(
                     &profile.user,
@@ -60,22 +46,13 @@ fn connect_session(profile: &TargetProfile) -> Result<Session> {
                     passphrase.as_deref(),
                 )
                 .with_context(|| {
-                    format!(
-                        "key auth failed for {}@{} using {}",
-                        profile.user,
-                        profile.endpoint(),
-                        expanded_private_key.display()
-                    )
+                    format!("key auth failed for {}", profile.endpoint())
                 })?;
         }
     }
 
     if !session.authenticated() {
-        bail!(
-            "authentication did not complete for {}@{}",
-            profile.user,
-            profile.endpoint()
-        );
+        bail!("authentication did not complete for {}", profile.endpoint());
     }
 
     Ok(session)
@@ -85,8 +62,7 @@ pub fn test_connection(profile: &TargetProfile) -> Result<()> {
     let session = connect_session(profile)?;
     if !session.authenticated() {
         return Err(anyhow!(
-            "session established but authentication state is false for {}@{}",
-            profile.user,
+            "session established but authentication state is false for {}",
             profile.endpoint()
         ));
     }

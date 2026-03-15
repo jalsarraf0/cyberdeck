@@ -166,10 +166,7 @@ pub fn import_private_key(
 ) -> Result<LocalKey> {
     let private_key = expand_home_path(private_key_path)?;
     if !private_key.exists() {
-        return Err(anyhow!(
-            "private key file does not exist: {}",
-            private_key.display()
-        ));
+        return Err(anyhow!("private key file does not exist"));
     }
 
     let mut read_pub = Command::new("ssh-keygen");
@@ -182,22 +179,18 @@ pub fn import_private_key(
 
     let output = read_pub
         .output()
-        .with_context(|| format!("failed reading private key: {}", private_key.display()))?;
+        .context("failed reading private key")?;
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
         return Err(anyhow!(
-            "ssh-keygen could not read private key {}: {}",
-            private_key.display(),
+            "ssh-keygen could not read private key: {}",
             stderr.trim()
         ));
     }
 
     let public_key = String::from_utf8_lossy(&output.stdout).trim().to_string();
     if public_key.is_empty() {
-        return Err(anyhow!(
-            "ssh-keygen returned empty public key for {}",
-            private_key.display()
-        ));
+        return Err(anyhow!("ssh-keygen returned empty public key"));
     }
     let (algorithm, comment) = parse_pubkey_metadata(&public_key);
 
