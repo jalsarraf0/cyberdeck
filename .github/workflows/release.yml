@@ -13,7 +13,7 @@ permissions:
 jobs:
   verify:
     name: Verify Before Release
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, gentoo]
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
@@ -43,10 +43,9 @@ jobs:
   build:
     name: Build (${{ matrix.os }})
     needs: verify
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, gentoo]
     strategy:
       fail-fast: false
-      matrix:
         include:
           - os: ubuntu-latest
             bin: cyberdeck
@@ -114,7 +113,7 @@ jobs:
   publish:
     name: Publish GitHub Release
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, gentoo]
     steps:
       - name: Download build artifacts
         uses: actions/download-artifact@v4
