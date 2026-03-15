@@ -25,6 +25,7 @@ jobs:
         run: rm -rf "$GITHUB_WORKSPACE"/* "$GITHUB_WORKSPACE"/.??* 2>/dev/null || true
       - uses: actions/checkout@v4
         with:
+          clean: false
           fetch-depth: 0
       - uses: dtolnay/rust-toolchain@stable
         with:

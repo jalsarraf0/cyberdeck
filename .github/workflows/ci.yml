@@ -21,6 +21,8 @@ jobs:
       - name: Clean workspace
         run: rm -rf "$GITHUB_WORKSPACE"/* "$GITHUB_WORKSPACE"/.??* 2>/dev/null || true
       - uses: actions/checkout@v4
+        with:
+          clean: false
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
@@ -47,6 +49,8 @@ jobs:
       - name: Clean workspace
         run: rm -rf "$GITHUB_WORKSPACE"/* "$GITHUB_WORKSPACE"/.??* 2>/dev/null || true
       - uses: actions/checkout@v4
+        with:
+          clean: false
       - name: Initialize Docker runner cache
         run: mkdir -p /tmp/docker-runner/{images,cache,artifacts}
       - name: Full regression (Docker)
