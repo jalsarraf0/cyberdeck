@@ -28,6 +28,7 @@ jobs:
             runs-on: windows-latest
     steps:
       - name: Fix ownership
+        if: runner.os == 'Linux'
         run: sudo chown -R $(whoami) ${{ github.workspace }} 2>/dev/null || true
 
       - uses: actions/checkout@v4
@@ -45,6 +46,7 @@ jobs:
       DOCKER_RUNNER_PRUNE: "true"
     steps:
       - name: Fix ownership
+        if: runner.os == 'Linux'
         run: sudo chown -R $(whoami) ${{ github.workspace }} 2>/dev/null || true
 
       - uses: actions/checkout@v4
