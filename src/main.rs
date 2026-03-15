@@ -85,6 +85,8 @@ enum Commands {
     ImportConfig,
     /// Audit local SSH keys for security issues
     AuditKeys,
+    /// Export saved targets as runnable SSH commands
+    Export,
 }
 
 fn main() -> Result<()> {
@@ -156,6 +158,7 @@ fn main() -> Result<()> {
         }
         Some(Commands::ImportConfig) => cmd_import_config(),
         Some(Commands::AuditKeys) => cmd_audit_keys(),
+        Some(Commands::Export) => cmd_export(),
     }
 }
 
@@ -235,6 +238,55 @@ fn cmd_audit_keys() -> Result<()> {
     Ok(())
 }
 
+fn cmd_export() -> Result<()> {
+    let config = load_config()?;
+    if config.targets.is_empty() {
+        println!("No targets configured. Use 'cyberdeck import-config' or add targets in the TUI.");
+        return Ok(());
+    }
+
+    for target in &config.targets {
+        println!("# {}", target.name);
+        println!("{}", format_ssh_command(target));
+        println!();
+    }
+    Ok(())
+}
+
+/// Format a target profile as a runnable SSH command.
+///
+/// Key-file auth → `ssh -i <key> [-p port] user@host`
+/// Password auth → comment noting sshpass or manual entry is needed
+fn format_ssh_command(profile: &TargetProfile) -> String {
+    // TODO: This is a great place for you to implement!
+    // Consider: key-file vs password auth, non-standard ports, passphrase handling.
+    // See the guidance in the conversation above.
+    let mut parts = vec!["ssh".to_string()];
+
+    match &profile.auth {
+        AuthMethod::KeyFile { private_key, .. } => {
+            parts.push("-i".to_string());
+            parts.push(private_key.clone());
+        }
+        AuthMethod::Password { .. } => {
+            // Password auth can't be expressed safely in a plain ssh command.
+            // Emit as a comment so the user knows to enter it interactively.
+            parts.insert(
+                0,
+                "# (password auth — enter password when prompted)\n".to_string(),
+            );
+        }
+    }
+
+    if profile.port != 22 {
+        parts.push("-p".to_string());
+        parts.push(profile.port.to_string());
+    }
+
+    parts.push(format!("{}@{}", profile.user, profile.host));
+    parts.join(" ")
+}
+
 fn build_profile(
     host: String,
     port: u16,
@@ -288,7 +340,7 @@ fn build_profile(
 #[cfg(test)]
 mod tests {
     use super::build_profile;
-    use cyberdeck::models::AuthMethod;
+    use cyberdeck::models::{AuthMethod, TargetProfile};
 
     #[test]
     fn build_profile_rejects_empty_host_and_user() {
@@ -315,6 +367,55 @@ mod tests {
             )
             .is_err()
         );
+    }
+
+    #[test]
+    fn format_ssh_command_keyfile_standard_port() {
+        let profile = TargetProfile {
+            name: "dev".to_string(),
+            host: "10.0.0.1".to_string(),
+            port: 22,
+            user: "deploy".to_string(),
+            auth: AuthMethod::KeyFile {
+                private_key: "~/.ssh/id_ed25519".to_string(),
+                passphrase: None,
+            },
+        };
+        let cmd = super::format_ssh_command(&profile);
+        assert_eq!(cmd, "ssh -i ~/.ssh/id_ed25519 deploy@10.0.0.1");
+    }
+
+    #[test]
+    fn format_ssh_command_keyfile_custom_port() {
+        let profile = TargetProfile {
+            name: "prod".to_string(),
+            host: "prod.example.com".to_string(),
+            port: 2222,
+            user: "admin".to_string(),
+            auth: AuthMethod::KeyFile {
+                private_key: "~/.ssh/prod_key".to_string(),
+                passphrase: None,
+            },
+        };
+        let cmd = super::format_ssh_command(&profile);
+        assert_eq!(cmd, "ssh -i ~/.ssh/prod_key -p 2222 admin@prod.example.com");
+    }
+
+    #[test]
+    fn format_ssh_command_password_auth() {
+        let profile = TargetProfile {
+            name: "legacy".to_string(),
+            host: "old.server".to_string(),
+            port: 22,
+            user: "root".to_string(),
+            auth: AuthMethod::Password {
+                password: "secret".to_string(),
+            },
+        };
+        let cmd = super::format_ssh_command(&profile);
+        assert!(cmd.contains("password auth"));
+        assert!(cmd.contains("ssh"));
+        assert!(cmd.contains("root@old.server"));
     }
 
     #[test]

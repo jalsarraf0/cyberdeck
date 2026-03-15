@@ -46,24 +46,45 @@ jobs:
   build:
     name: Build (${{ matrix.target }})
     needs: verify
-    runs-on: [self-hosted, gentoo]
+    runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
       matrix:
         include:
           - target: x86_64-unknown-linux-gnu
             bin: cyberdeck
+            runner: ubuntu-latest
+          - target: aarch64-unknown-linux-gnu
+            bin: cyberdeck
+            runner: ubuntu-latest
+            cross: true
           - target: x86_64-apple-darwin
             bin: cyberdeck
+            runner: macos-13
+          - target: aarch64-apple-darwin
+            bin: cyberdeck
+            runner: macos-latest
           - target: x86_64-pc-windows-msvc
             bin: cyberdeck.exe
+            runner: windows-latest
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
       - uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.target }}
+
+      - name: Install cross-compilation tools (aarch64 Linux)
+        if: matrix.cross
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu
+          echo "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc" >> $GITHUB_ENV
 
       - name: Build release binary
-        run: cargo build --release --locked
+        run: cargo build --release --locked --target ${{ matrix.target }}
 
       - name: Package tar.gz (Linux/macOS)
         id: package_unix
@@ -71,7 +92,7 @@ jobs:
         shell: bash
         run: |
           mkdir -p dist
-          cp "target/release/${{ matrix.bin }}" "dist/${{ matrix.bin }}"
+          cp "target/${{ matrix.target }}/release/${{ matrix.bin }}" "dist/${{ matrix.bin }}"
           VERSION="${GITHUB_REF_NAME#v}"
           ARCHIVE="cyberdeck-${VERSION}-${{ matrix.target }}.tar.gz"
           tar -C dist -czf "$ARCHIVE" "${{ matrix.bin }}"
@@ -83,7 +104,7 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path dist | Out-Null
-          Copy-Item "target/release/${{ matrix.bin }}" "dist/${{ matrix.bin }}"
+          Copy-Item "target/${{ matrix.target }}/release/${{ matrix.bin }}" "dist/${{ matrix.bin }}"
           $version = $env:GITHUB_REF_NAME.Substring(1)
           $archive = "cyberdeck-$version-${{ matrix.target }}.zip"
           Compress-Archive -Path "dist/${{ matrix.bin }}" -DestinationPath $archive -Force
@@ -98,12 +119,14 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: release-${{ matrix.target }}
-          path: "*.tar.gz\n*.zip"
+          path: |
+            *.tar.gz
+            *.zip
 
   package:
     name: Build Linux Packages
     needs: build
-    runs-on: [self-hosted, gentoo]
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Download Linux binary
@@ -139,7 +162,7 @@ jobs:
   publish:
     name: Publish GitHub Release
     needs: [build, package]
-    runs-on: [self-hosted, gentoo]
+    runs-on: ubuntu-latest
     steps:
       - name: Download all artifacts
         uses: actions/download-artifact@v4

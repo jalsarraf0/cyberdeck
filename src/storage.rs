@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result};
 
-use crate::models::AppConfig;
+use crate::models::{AppConfig, AuthMethod};
 
 const CONFIG_DIR_OVERRIDE_ENV: &str = "CYBERDECK_CONFIG_DIR";
 
@@ -66,6 +66,18 @@ fn load_config_from_path(path: &Path) -> Result<AppConfig> {
     Ok(cfg)
 }
 
+/// Strip passwords and passphrases so they are never written to disk.
+fn sanitize_for_persistence(cfg: &AppConfig) -> AppConfig {
+    let mut sanitized = cfg.clone();
+    for target in &mut sanitized.targets {
+        match &mut target.auth {
+            AuthMethod::Password { password } => password.clear(),
+            AuthMethod::KeyFile { passphrase, .. } => *passphrase = None,
+        }
+    }
+    sanitized
+}
+
 fn save_config_to_path(cfg: &AppConfig, path: &Path) -> Result<()> {
     let dir = path
         .parent()
@@ -76,7 +88,8 @@ fn save_config_to_path(cfg: &AppConfig, path: &Path) -> Result<()> {
     #[cfg(unix)]
     set_dir_permissions(dir)?;
 
-    let raw = serde_json::to_string_pretty(cfg).context("failed serializing config")?;
+    let safe_cfg = sanitize_for_persistence(cfg);
+    let raw = serde_json::to_string_pretty(&safe_cfg).context("failed serializing config")?;
     let tmp_path = dir.join(format!(".config.{}.tmp", std::process::id()));
     fs::write(&tmp_path, raw)
         .with_context(|| format!("failed writing temp config file: {}", tmp_path.display()))?;
@@ -179,5 +192,53 @@ mod tests {
         assert_eq!(loaded.targets[0].name, "local");
         assert_eq!(loaded.targets[0].endpoint(), "127.0.0.1:2222");
         assert_eq!(loaded.theme.as_deref(), Some("matrix"));
+    }
+
+    #[test]
+    fn credentials_stripped_on_save() {
+        let tmp = TempDir::new().expect("tempdir");
+        let path = tmp.path().join("config.json");
+
+        let cfg = AppConfig {
+            targets: vec![
+                TargetProfile {
+                    name: "pw".to_string(),
+                    host: "10.0.0.1".to_string(),
+                    port: 22,
+                    user: "admin".to_string(),
+                    auth: AuthMethod::Password {
+                        password: "pw1".to_string(),
+                    },
+                },
+                TargetProfile {
+                    name: "key".to_string(),
+                    host: "10.0.0.2".to_string(),
+                    port: 22,
+                    user: "deploy".to_string(),
+                    auth: AuthMethod::KeyFile {
+                        private_key: "~/.ssh/id_ed25519".to_string(),
+                        passphrase: Some("pp1".to_string()),
+                    },
+                },
+            ],
+            theme: None,
+        };
+
+        save_config_to_path(&cfg, &path).expect("save config");
+
+        // Verify the raw JSON on disk contains no secrets
+        let raw = std::fs::read_to_string(&path).expect("read config");
+        assert!(!raw.contains("pw1"), "password leaked to disk");
+        assert!(!raw.contains("pp1"), "passphrase leaked to disk");
+
+        let loaded = load_config_from_path(&path).expect("load config");
+        match &loaded.targets[0].auth {
+            AuthMethod::Password { password } => assert!(password.is_empty()),
+            _ => panic!("expected password auth"),
+        }
+        match &loaded.targets[1].auth {
+            AuthMethod::KeyFile { passphrase, .. } => assert!(passphrase.is_none()),
+            _ => panic!("expected keyfile auth"),
+        }
     }
 }

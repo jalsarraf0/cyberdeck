@@ -4,7 +4,7 @@ set -euo pipefail
 # Build Linux distribution packages for cyberdeck
 # Usage: build-packages.sh [rpm|deb|pacman|all]
 
-VERSION="0.1.6"
+VERSION="0.1.7"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 OUTPUT_DIR="${SCRIPT_DIR}/output"
 BINARY="${SCRIPT_DIR}/../release-assets/cyberdeck"
