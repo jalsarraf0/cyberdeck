@@ -1,10 +1,5 @@
-[graph]
-all-features = true
-
 [advisories]
-unmaintained = "deny"
-yanked = "deny"
-notice = "warn"
+ignore = []
 
 [licenses]
 version = 2
