@@ -1,8 +1,11 @@
 use anyhow::{Result, anyhow};
 use clap::{Parser, Subcommand};
+use cyberdeck::health::{Severity, audit_keys};
 use cyberdeck::keys::{expand_home_path, import_private_key, scan_local_keys};
 use cyberdeck::models::{AuthMethod, TargetProfile};
+use cyberdeck::ssh_config::import_ssh_config_as_targets;
 use cyberdeck::ssh_ops::{exchange_public_key, fetch_remote_authorized_keys, run_remote_command};
+use cyberdeck::storage::{load_config, save_config};
 use cyberdeck::tui::run_tui;
 
 #[derive(Parser, Debug)]
@@ -78,6 +81,10 @@ enum Commands {
         #[arg(long)]
         passphrase: Option<String>,
     },
+    /// Import SSH targets from ~/.ssh/config (skips duplicates)
+    ImportConfig,
+    /// Audit local SSH keys for security issues
+    AuditKeys,
 }
 
 fn main() -> Result<()> {
@@ -147,6 +154,8 @@ fn main() -> Result<()> {
             println!("Total keys: {}", keys.len());
             Ok(())
         }
+        Some(Commands::ImportConfig) => cmd_import_config(),
+        Some(Commands::AuditKeys) => cmd_audit_keys(),
     }
 }
 
@@ -160,6 +169,69 @@ fn cmd_list_keys() -> Result<()> {
     for key in keys {
         println!("{} | {} | {}", key.name, key.algorithm, key.public_key_path);
     }
+    Ok(())
+}
+
+fn cmd_import_config() -> Result<()> {
+    let mut config = load_config()?;
+    let (imported, skipped) = import_ssh_config_as_targets(&config.targets)?;
+
+    if imported.is_empty() {
+        println!(
+            "No new targets to import from ~/.ssh/config ({} skipped as duplicates).",
+            skipped
+        );
+        return Ok(());
+    }
+
+    let count = imported.len();
+    for profile in &imported {
+        println!(
+            "  + {} -> {}@{}:{}",
+            profile.name, profile.user, profile.host, profile.port
+        );
+    }
+    config.targets.extend(imported);
+    save_config(&config)?;
+    println!(
+        "Imported {} target(s), skipped {} duplicate(s).",
+        count, skipped
+    );
+    Ok(())
+}
+
+fn cmd_audit_keys() -> Result<()> {
+    let keys = scan_local_keys()?;
+    let findings = audit_keys(&keys);
+
+    if findings.is_empty() {
+        println!("No findings. All keys look good.");
+        return Ok(());
+    }
+
+    let mut criticals = 0;
+    let mut warns = 0;
+
+    for finding in &findings {
+        match finding.severity {
+            Severity::Critical => {
+                criticals += 1;
+                eprintln!("{finding}");
+            }
+            Severity::Warn => {
+                warns += 1;
+                eprintln!("{finding}");
+            }
+            _ => println!("{finding}"),
+        }
+    }
+
+    println!(
+        "\nSummary: {} finding(s) — {} critical, {} warning(s)",
+        findings.len(),
+        criticals,
+        warns
+    );
     Ok(())
 }
 

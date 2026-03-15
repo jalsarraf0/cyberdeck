@@ -20,24 +20,22 @@ fn connect_session(profile: &TargetProfile) -> Result<Session> {
 
     let mut session = Session::new().context("failed creating ssh session")?;
     session.set_tcp_stream(tcp);
-    session.handshake().with_context(|| {
-        format!("failed SSH handshake with {}", profile.endpoint())
-    })?;
+    session
+        .handshake()
+        .with_context(|| format!("failed SSH handshake with {}", profile.endpoint()))?;
 
     match &profile.auth {
         AuthMethod::Password { password } => {
             session
                 .userauth_password(&profile.user, password)
-                .with_context(|| {
-                    format!("password auth failed for {}", profile.endpoint())
-                })?;
+                .with_context(|| format!("password auth failed for {}", profile.endpoint()))?;
         }
         AuthMethod::KeyFile {
             private_key,
             passphrase,
         } => {
-            let expanded_private_key = expand_home_path(private_key)
-                .context("invalid private key path")?;
+            let expanded_private_key =
+                expand_home_path(private_key).context("invalid private key path")?;
             session
                 .userauth_pubkey_file(
                     &profile.user,
@@ -45,9 +43,7 @@ fn connect_session(profile: &TargetProfile) -> Result<Session> {
                     Path::new(&expanded_private_key),
                     passphrase.as_deref(),
                 )
-                .with_context(|| {
-                    format!("key auth failed for {}", profile.endpoint())
-                })?;
+                .with_context(|| format!("key auth failed for {}", profile.endpoint()))?;
         }
     }
 

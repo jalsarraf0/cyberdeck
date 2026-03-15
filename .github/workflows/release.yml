@@ -19,7 +19,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
         with:
-          components: rustfmt
+          components: rustfmt, clippy
       - uses: Swatinem/rust-cache@v2
 
       - name: Verify tag matches Cargo version
@@ -34,6 +34,9 @@ jobs:
       - name: Formatting check
         run: cargo fmt --all -- --check
 
+      - name: Clippy lint
+        run: cargo clippy --workspace --all-targets -- -D warnings
+
       - name: Unit and integration tests
         run: cargo test --all-targets
 
@@ -41,19 +44,19 @@ jobs:
         run: ./scripts/regression.sh
 
   build:
-    name: Build (${{ matrix.os }})
+    name: Build (${{ matrix.target }})
     needs: verify
     runs-on: [self-hosted, gentoo]
     strategy:
       fail-fast: false
+      matrix:
         include:
-          - os: ubuntu-latest
+          - target: x86_64-unknown-linux-gnu
             bin: cyberdeck
-          - os: macos-latest
+          - target: x86_64-apple-darwin
             bin: cyberdeck
-          - os: windows-latest
+          - target: x86_64-pc-windows-msvc
             bin: cyberdeck.exe
-
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
@@ -62,64 +65,93 @@ jobs:
       - name: Build release binary
         run: cargo build --release --locked
 
-      - name: Package archive (Linux/macOS)
+      - name: Package tar.gz (Linux/macOS)
         id: package_unix
+        if: runner.os != 'Windows'
         shell: bash
         run: |
           mkdir -p dist
           cp "target/release/${{ matrix.bin }}" "dist/${{ matrix.bin }}"
-          TARGET="$(rustc -vV | awk '/^host: / { print $2 }')"
           VERSION="${GITHUB_REF_NAME#v}"
-          ARCHIVE="cyberdeck-${VERSION}-${TARGET}.tar.gz"
+          ARCHIVE="cyberdeck-${VERSION}-${{ matrix.target }}.tar.gz"
           tar -C dist -czf "$ARCHIVE" "${{ matrix.bin }}"
           echo "archive=$ARCHIVE" >> "$GITHUB_OUTPUT"
-          echo "target=$TARGET" >> "$GITHUB_OUTPUT"
 
-      - name: Package archive (Windows)
+      - name: Package zip (Windows)
         id: package_windows
+        if: runner.os == 'Windows'
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path dist | Out-Null
           Copy-Item "target/release/${{ matrix.bin }}" "dist/${{ matrix.bin }}"
-          $target = ((rustc -vV | Select-String '^host:\s+').ToString() -replace '^host:\s+', '')
           $version = $env:GITHUB_REF_NAME.Substring(1)
-          $archive = "cyberdeck-$version-$target.zip"
+          $archive = "cyberdeck-$version-${{ matrix.target }}.zip"
           Compress-Archive -Path "dist/${{ matrix.bin }}" -DestinationPath $archive -Force
           "archive=$archive" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
-          "target=$target" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
 
-      - name: Attest build provenance (Linux/macOS)
+      - name: Attest build provenance
         uses: actions/attest-build-provenance@v2
         with:
-          subject-path: ${{ steps.package_unix.outputs.archive }}
+          subject-path: ${{ steps.package_unix.outputs.archive || steps.package_windows.outputs.archive }}
 
-      - name: Attest build provenance (Windows)
-        uses: actions/attest-build-provenance@v2
-        with:
-          subject-path: ${{ steps.package_windows.outputs.archive }}
-
-      - name: Upload artifact (Linux/macOS)
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: release-${{ steps.package_unix.outputs.target }}
-          path: ${{ steps.package_unix.outputs.archive }}
+          name: release-${{ matrix.target }}
+          path: "*.tar.gz\n*.zip"
 
-      - name: Upload artifact (Windows)
-        uses: actions/upload-artifact@v4
-        with:
-          name: release-${{ steps.package_windows.outputs.target }}
-          path: ${{ steps.package_windows.outputs.archive }}
-
-  publish:
-    name: Publish GitHub Release
+  package:
+    name: Build Linux Packages
     needs: build
     runs-on: [self-hosted, gentoo]
     steps:
-      - name: Download build artifacts
+      - uses: actions/checkout@v4
+      - name: Download Linux binary
+        uses: actions/download-artifact@v4
+        with:
+          name: release-x86_64-unknown-linux-gnu
+          path: release-assets
+
+      - name: Extract binary
+        run: |
+          cd release-assets
+          tar xzf cyberdeck-*.tar.gz
+          chmod +x cyberdeck
+
+      - name: Build RPM
+        run: bash packaging/build-packages.sh rpm
+
+      - name: Build DEB
+        run: bash packaging/build-packages.sh deb
+
+      - name: Build Pacman
+        run: bash packaging/build-packages.sh pacman
+
+      - name: Upload packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-packages
+          path: |
+            packaging/output/*.rpm
+            packaging/output/*.deb
+            packaging/output/*.pkg.tar.zst
+
+  publish:
+    name: Publish GitHub Release
+    needs: [build, package]
+    runs-on: [self-hosted, gentoo]
+    steps:
+      - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
           pattern: release-*
           merge-multiple: true
+          path: release-assets
+
+      - name: Download Linux packages
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-packages
           path: release-assets
 
       - name: Publish release

@@ -17,52 +17,30 @@ permissions:
   security-events: write
 
 jobs:
-  dependency-audit:
-    name: Dependency Audit
+  security-scan:
+    name: Security Scan
     runs-on: [self-hosted, gentoo]
     steps:
-
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
-      - uses: taiki-e/install-action@cargo-audit
-      - name: Cargo audit
-        run: cargo audit
-
-  cargo-deny:
-    name: Cargo Deny
-    runs-on: [self-hosted, gentoo]
-    steps:
-
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
-      - name: Install cargo-deny
-        run: cargo install cargo-deny --locked
-      - name: Cargo deny check
-        run: cargo deny check --config deny.toml --hide-inclusion-graph bans licenses sources
-
-  static-analysis:
-    name: Static Analysis
-    runs-on: [self-hosted, gentoo]
-    steps:
-
-      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy
       - uses: Swatinem/rust-cache@v2
+      - uses: taiki-e/install-action@cargo-audit
+
+      - name: Cargo audit
+        run: cargo audit
+
+      - name: Install cargo-deny
+        run: cargo install cargo-deny --locked
+
+      - name: Cargo deny check
+        run: cargo deny check --config deny.toml --hide-inclusion-graph bans licenses sources
+
       - name: Clippy (deny warnings)
         run: cargo clippy --all-targets -- -D warnings
-
-  gitleaks:
-    name: Gitleaks Secret Scan
-    runs-on: [self-hosted, gentoo]
-    steps:
-
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Install Gitleaks
         run: |
@@ -73,37 +51,15 @@ jobs:
           version="8.24.3"
           arch="$(uname -m)"
           case "${arch}" in
-            x86_64)
-              archive="gitleaks_${version}_linux_x64.tar.gz"
-              ;;
-            aarch64|arm64)
-              archive="gitleaks_${version}_linux_arm64.tar.gz"
-              ;;
-            *)
-              echo "Unsupported architecture for gitleaks: ${arch}"
-              exit 1
-              ;;
+            x86_64)  archive="gitleaks_${version}_linux_x64.tar.gz" ;;
+            aarch64|arm64) archive="gitleaks_${version}_linux_arm64.tar.gz" ;;
+            *) echo "Unsupported arch: ${arch}"; exit 1 ;;
           esac
           url="https://github.com/gitleaks/gitleaks/releases/download/v${version}/${archive}"
           tmpdir="$(mktemp -d)"
-          if command -v curl >/dev/null 2>&1; then
-            curl -fsSL "${url}" -o "${tmpdir}/${archive}"
-          elif command -v wget >/dev/null 2>&1; then
-            wget -q "${url}" -O "${tmpdir}/${archive}"
-          else
-            echo "Neither curl nor wget is available for downloading gitleaks."
-            exit 1
-          fi
+          curl -fsSL "${url}" -o "${tmpdir}/${archive}"
           tar -xzf "${tmpdir}/${archive}" -C "${tmpdir}"
-          if command -v sudo >/dev/null 2>&1; then
-            sudo install -m 0755 "${tmpdir}/gitleaks" /usr/local/bin/gitleaks
-          elif install -m 0755 "${tmpdir}/gitleaks" /usr/local/bin/gitleaks 2>/dev/null; then
-            true
-          else
-            mkdir -p "${HOME}/.local/bin"
-            install -m 0755 "${tmpdir}/gitleaks" "${HOME}/.local/bin/gitleaks"
-            echo "${HOME}/.local/bin" >> "${GITHUB_PATH}"
-          fi
+          install -m 0755 "${tmpdir}/gitleaks" "${HOME}/.local/bin/gitleaks" 2>/dev/null || sudo install -m 0755 "${tmpdir}/gitleaks" /usr/local/bin/gitleaks
 
       - name: Gitleaks detect
         run: |

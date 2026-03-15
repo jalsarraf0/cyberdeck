@@ -19,8 +19,10 @@ use ratatui::widgets::{
     Block, BorderType, Borders, Clear, List, ListItem, ListState, Paragraph, Tabs, Wrap,
 };
 
+use crate::health::{Severity, audit_keys};
 use crate::keys::{generate_ed25519_key, import_private_key, scan_local_keys};
 use crate::models::{AppConfig, AuthMethod, LocalKey, TargetProfile};
+use crate::ssh_config::import_ssh_config_as_targets;
 use crate::ssh_ops::{
     exchange_public_key, fetch_remote_authorized_keys, run_remote_command, test_connection,
 };
@@ -807,6 +809,9 @@ impl App {
                 self.modal = Modal::ImportKey(ImportKeyForm::default());
                 self.log("Import-key modal opened.");
             }
+            KeyCode::Char('h') => {
+                self.run_key_health_audit();
+            }
             _ => {}
         }
     }
@@ -829,6 +834,9 @@ impl App {
             }
             KeyCode::Char('t') => {
                 self.test_selected_target();
+            }
+            KeyCode::Char('c') => {
+                self.import_from_ssh_config();
             }
             _ => {}
         }
@@ -961,6 +969,62 @@ impl App {
                 self.console_push(format!("[error] {err}"));
                 self.log(format!("ERROR: remote command failed: {err}"));
             }
+        }
+    }
+
+    fn run_key_health_audit(&mut self) {
+        self.log("Running key health audit...");
+        let findings = audit_keys(&self.local_keys);
+
+        if findings.is_empty() {
+            self.log("Health audit: all keys look good.");
+            return;
+        }
+
+        let mut criticals = 0;
+        let mut warns = 0;
+        for finding in &findings {
+            match finding.severity {
+                Severity::Critical => criticals += 1,
+                Severity::Warn => warns += 1,
+                _ => {}
+            }
+            self.log(format!("{finding}"));
+        }
+
+        self.log(format!(
+            "Audit complete: {} finding(s) — {} critical, {} warning(s)",
+            findings.len(),
+            criticals,
+            warns
+        ));
+    }
+
+    fn import_from_ssh_config(&mut self) {
+        self.log("Importing targets from ~/.ssh/config...");
+        match import_ssh_config_as_targets(&self.config.targets) {
+            Ok((imported, skipped)) => {
+                if imported.is_empty() {
+                    self.log(format!(
+                        "No new targets found in SSH config ({skipped} skipped as duplicates)."
+                    ));
+                    return;
+                }
+                let count = imported.len();
+                for profile in &imported {
+                    self.log(format!(
+                        "  + {} -> {}@{}:{}",
+                        profile.name, profile.user, profile.host, profile.port
+                    ));
+                }
+                self.config.targets.extend(imported);
+                self.clamp_selection();
+                self.save_config();
+                self.log(format!(
+                    "Imported {count} target(s), skipped {skipped} duplicate(s)."
+                ));
+            }
+            Err(err) => self.log(format!("ERROR: SSH config import failed: {err}")),
         }
     }
 }
@@ -1248,6 +1312,7 @@ fn draw_keys_tab(frame: &mut ratatui::Frame<'_>, area: Rect, app: &App) {
                 "i = import existing private key",
                 Style::default().fg(neon_lime()),
             ),
+            Line::styled("h = health audit", Style::default().fg(neon_lime())),
             Line::styled("r = refresh key list", Style::default().fg(neon_lime())),
         ])
     } else {
@@ -1265,6 +1330,7 @@ fn draw_keys_tab(frame: &mut ratatui::Frame<'_>, area: Rect, app: &App) {
                 "i = import existing private key",
                 Style::default().fg(neon_lime()),
             ),
+            Line::styled("h = health audit", Style::default().fg(neon_lime())),
             Line::styled("r = refresh key list", Style::default().fg(neon_lime())),
         ])
     };
@@ -1357,6 +1423,10 @@ fn draw_targets_tab(frame: &mut ratatui::Frame<'_>, area: Rect, app: &App) {
             Line::styled("a = add target", Style::default().fg(neon_lime())),
             Line::styled("d = delete target", Style::default().fg(neon_lime())),
             Line::styled("t = test connection", Style::default().fg(neon_lime())),
+            Line::styled(
+                "c = import from ssh config",
+                Style::default().fg(neon_lime()),
+            ),
             Line::styled("r = refresh view", Style::default().fg(neon_lime())),
         ])
     } else {
@@ -1372,6 +1442,10 @@ fn draw_targets_tab(frame: &mut ratatui::Frame<'_>, area: Rect, app: &App) {
             Line::styled("a = add target", Style::default().fg(neon_lime())),
             Line::styled("d = delete target", Style::default().fg(neon_lime())),
             Line::styled("t = test connection", Style::default().fg(neon_lime())),
+            Line::styled(
+                "c = import from ssh config",
+                Style::default().fg(neon_lime()),
+            ),
         ])
     };
 
@@ -1669,10 +1743,10 @@ fn draw_log_panel(frame: &mut ratatui::Frame<'_>, area: Rect, app: &App) {
 fn draw_footer(frame: &mut ratatui::Frame<'_>, area: Rect, tab: Tab, console_editing: bool) {
     let text = match tab {
         Tab::Keys => {
-            "KEYS  g generate  i import key  r refresh  F2 theme  arrows navigate  1-4 tabs  q quit"
+            "KEYS  g generate  i import key  h health audit  r refresh  F2 theme  arrows navigate  1-4 tabs  q quit"
         }
         Tab::Targets => {
-            "TARGETS  a add  d delete  t test  F2 theme  arrows navigate  1-4 tabs  q quit"
+            "TARGETS  a add  d delete  t test  c import ssh config  F2 theme  arrows navigate  1-4 tabs  q quit"
         }
         Tab::Exchange => {
             "EXCHANGE  x push selected key  f fetch remote keys  F2 theme  arrows navigate  1-4 tabs  q quit"

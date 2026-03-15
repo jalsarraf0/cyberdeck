@@ -177,9 +177,7 @@ pub fn import_private_key(
         read_pub.arg("-P").arg(pass);
     }
 
-    let output = read_pub
-        .output()
-        .context("failed reading private key")?;
+    let output = read_pub.output().context("failed reading private key")?;
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
         return Err(anyhow!(
