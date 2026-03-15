@@ -19,7 +19,7 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Clean workspace
-        run: rm -rf "$GITHUB_WORKSPACE"/* "$GITHUB_WORKSPACE"/.??* 2>/dev/null || true
+        run: sudo rm -rf "$GITHUB_WORKSPACE"/* "$GITHUB_WORKSPACE"/.??* 2>/dev/null || true
       - uses: actions/checkout@v4
         with:
           clean: false
@@ -47,7 +47,7 @@ jobs:
       DOCKER_RUNNER_PRUNE: "true"
     steps:
       - name: Clean workspace
-        run: rm -rf "$GITHUB_WORKSPACE"/* "$GITHUB_WORKSPACE"/.??* 2>/dev/null || true
+        run: sudo rm -rf "$GITHUB_WORKSPACE"/* "$GITHUB_WORKSPACE"/.??* 2>/dev/null || true
       - uses: actions/checkout@v4
         with:
           clean: false
