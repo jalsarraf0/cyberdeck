@@ -18,7 +18,7 @@ jobs:
     steps:
       - name: Clean workspace
         run: sudo rm -rf "$GITHUB_WORKSPACE"/* "$GITHUB_WORKSPACE"/.??* 2>/dev/null || true
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           clean: false
       - uses: dtolnay/rust-toolchain@stable
@@ -72,7 +72,7 @@ jobs:
             bin: cyberdeck.exe
             runner: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
@@ -120,7 +120,7 @@ jobs:
           subject-path: ${{ steps.package_unix.outputs.archive || steps.package_windows.outputs.archive }}
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: release-${{ matrix.target }}
           path: |
@@ -132,9 +132,9 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Download Linux binary
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: release-x86_64-unknown-linux-gnu
           path: release-assets
@@ -155,7 +155,7 @@ jobs:
         run: bash packaging/build-packages.sh pacman
 
       - name: Upload packages
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: linux-packages
           path: |
@@ -169,14 +169,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download all artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           pattern: release-*
           merge-multiple: true
           path: release-assets
 
       - name: Download Linux packages
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: linux-packages
           path: release-assets
