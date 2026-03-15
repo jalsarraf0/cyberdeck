@@ -6,9 +6,6 @@ unmaintained = "deny"
 yanked = "deny"
 notice = "warn"
 
-[bans]
-multiple-versions = "warn"
-
 [licenses]
 version = 2
 confidence-threshold = 0.8
