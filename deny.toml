@@ -9,8 +9,6 @@ notice = "warn"
 
 [bans]
 multiple-versions = "warn"
-wildcards = "warn"
-highlight = "all"
 
 [licenses]
 version = 2
