@@ -31,13 +31,25 @@ jobs:
         with:
           components: clippy
       - uses: Swatinem/rust-cache@v2
-      - uses: taiki-e/install-action@cargo-audit
+
+      - name: Install cargo-audit
+        run: |
+          if command -v cargo-audit >/dev/null 2>&1; then
+            echo "cargo-audit already installed"
+          else
+            cargo install cargo-audit --locked
+          fi
 
       - name: Cargo audit
         run: cargo audit
 
       - name: Install cargo-deny
-        run: cargo install cargo-deny --locked
+        run: |
+          if command -v cargo-deny >/dev/null 2>&1; then
+            echo "cargo-deny already installed"
+          else
+            cargo install cargo-deny --locked
+          fi
 
       - name: Cargo deny check
         run: cargo deny check --config deny.toml --hide-inclusion-graph bans licenses sources
@@ -70,7 +82,7 @@ jobs:
           gitleaks detect --source . --redact --verbose --exit-code 1 --report-format sarif --report-path gitleaks.sarif
 
       - name: Upload Gitleaks SARIF
-        if: always()
+        if: always() && hashFiles('gitleaks.sarif') != ''
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: gitleaks.sarif
