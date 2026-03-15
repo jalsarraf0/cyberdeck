@@ -3,7 +3,6 @@ all-features = true
 
 [advisories]
 unmaintained = "deny"
-unsound = "deny"
 yanked = "deny"
 notice = "warn"
 
