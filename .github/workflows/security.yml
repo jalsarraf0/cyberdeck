@@ -21,6 +21,8 @@ jobs:
     name: Security Scan
     runs-on: [self-hosted, gentoo]
     steps:
+      - name: Clean workspace
+        run: rm -rf "$GITHUB_WORKSPACE"/* "$GITHUB_WORKSPACE"/.??* 2>/dev/null || true
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
