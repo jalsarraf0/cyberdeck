@@ -1,9 +1,9 @@
 # cyberdeck
 
 [![CI](https://github.com/jalsarraf0/cyberdeck/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/jalsarraf0/cyberdeck/actions/workflows/ci.yml)
-[![Security](https://github.com/jalsarraf0/cyberdeck/actions/workflows/security.yml/badge.svg?branch=main)](https://github.com/jalsarraf0/cyberdeck/actions/workflows/security.yml)
-[![Release](https://github.com/jalsarraf0/cyberdeck/actions/workflows/release.yml/badge.svg)](https://github.com/jalsarraf0/cyberdeck/actions/workflows/release.yml)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
+
+> CI runs on self-hosted runners managed by [haskell-ci-orchestrator](https://github.com/jalsarraf0/haskell-ci-orchestrator) with build attestation.
 
 A cyberpunk-themed terminal UI for SSH key management, key exchange, and remote command execution. Built with Rust and [Ratatui](https://ratatui.rs).
 
