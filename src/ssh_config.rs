@@ -86,10 +86,13 @@ fn parse_ssh_config_str(content: &str) -> Vec<SshConfigEntry> {
             continue;
         }
 
-        // Split into keyword and argument
+        // Split into keyword and argument (SSH config supports both whitespace and '=' as delimiters)
         let (keyword, argument) = match trimmed.split_once(char::is_whitespace) {
             Some((k, a)) => (k.trim(), a.trim()),
-            None => continue,
+            None => match trimmed.split_once('=') {
+                Some((k, a)) => (k.trim(), a.trim()),
+                None => continue,
+            },
         };
 
         let keyword_lower = keyword.to_ascii_lowercase();
