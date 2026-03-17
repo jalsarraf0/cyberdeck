@@ -1,3 +1,7 @@
 /target
 /ci/orchestrator/dist-newstyle/
 /packaging/output/
+CLAUDE.md
+.CLAUDE.md
+AGENTS.md
+.GEMINI.md
