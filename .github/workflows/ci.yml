@@ -62,10 +62,10 @@ jobs:
           path: target
           restore-keys: ${{ runner.os }}-cargo-target-
 
-      - name: Run tests
+      - name: Cargo test
         shell: bash
-        timeout-minutes: 20
-        run: cargo test --workspace
+        timeout-minutes: 15
+        run: cargo test --all-targets
   security:
     name: Security
     runs-on: [self-hosted, unified-all]
