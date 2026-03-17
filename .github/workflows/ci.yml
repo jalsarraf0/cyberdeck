@@ -19,6 +19,11 @@ permissions:
 concurrency:
   group: cyberdeck-ci-${{ github.ref }}
   cancel-in-progress: true
+
+env:
+  RUSTUP_HOME: /home/runner/.rustup
+  CARGO_HOME: /home/runner/.cargo
+
 jobs:
   lint:
     name: Lint
