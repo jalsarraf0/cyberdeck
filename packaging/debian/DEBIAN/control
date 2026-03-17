@@ -1,0 +1,12 @@
+Package: cyberdeck
+Version: 0.1.7-1
+Section: utils
+Priority: optional
+Architecture: amd64
+Maintainer: cyberdeck <ci@cyberdeck>
+Description: Cyberpunk SSH key management TUI
+ Cyberdeck is a terminal UI for SSH key management, key exchange,
+ and remote command execution with a cyberpunk aesthetic.
+ .
+ Features include key generation, SSH config import, key health
+ auditing, and remote operations.

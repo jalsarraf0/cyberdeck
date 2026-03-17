@@ -1,0 +1,4 @@
+/target
+/ci/orchestrator/dist-newstyle/
+/packaging/output/
+CLAUDE.md

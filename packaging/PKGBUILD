@@ -1,0 +1,13 @@
+# Maintainer: cyberdeck CI
+pkgname=cyberdeck
+pkgver=0.1.7
+pkgrel=1
+pkgdesc='Cyberpunk SSH key management TUI'
+arch=('x86_64')
+url='https://github.com/jalsarraf0/cyberdeck'
+license=('Apache-2.0')
+depends=('openssh')
+
+package() {
+    install -Dm755 "$srcdir/cyberdeck" "$pkgdir/usr/bin/cyberdeck"
+}
