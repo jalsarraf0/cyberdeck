@@ -109,7 +109,7 @@ jobs:
         timeout-minutes: 5
         run: cd release-assets && sha256sum * > SHA256SUMS
       - name: Attest build provenance
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest-build-provenance@v4
         with:
           subject-path: release-assets/*
       - name: Create GitHub Release
